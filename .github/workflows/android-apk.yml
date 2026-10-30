@@ -1,0 +1,37 @@
+
+name: Build My Dream City APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract game project
+        run: |
+          mkdir -p game
+          unzip -o My_Dream_City_GitHub_Ready.zip -d game
+          find game -name project.godot
+
+      - name: Prepare Android export
+        run: |
+          mkdir -p build
+          godot --headless --path game/My_Dream_City_Godot --editor --quit
+
+      - name: Build APK
+        run: |
+          godot --headless --path game/My_Dream_City_Godot --export-debug "Android" "$GITHUB_WORKSPACE/build/MyDreamCity.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyDreamCity-APK
+          path: build/MyDreamCity.apk
+          
