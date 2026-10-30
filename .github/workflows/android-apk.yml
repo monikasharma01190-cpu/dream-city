@@ -1,4 +1,3 @@
-
 name: Build My Dream City APK
 
 on:
@@ -7,31 +6,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.3
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract game project
+      - name: Find and extract project ZIP
         run: |
+          ZIP=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: Project ZIP not found"
+            exit 1
+          fi
+          echo "Found ZIP: $ZIP"
           mkdir -p game
-          unzip -o My_Dream_City_GitHub_Ready.zip -d game
-          find game -name project.godot
+          unzip -o "$ZIP" -d game
+          find game -name project.godot -print
 
-      - name: Prepare Android export
+      - name: Verify Godot project
         run: |
-          mkdir -p build
-          godot --headless --path game/My_Dream_City_Godot --editor --quit
-
-      - name: Build APK
-        run: |
-          godot --headless --path game/My_Dream_City_Godot --export-debug "Android" "$GITHUB_WORKSPACE/build/MyDreamCity.apk"
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: MyDreamCity-APK
-          path: build/MyDreamCity.apk
-          
+          PROJECT=$(find game -name project.godot | head -n 1)
+          if [ -z "$PROJECT" ]; then
+            echo "ERROR: project.godot not found"
+            exit 1
+          fi
+          echo "Project found: $PROJECT"
+          ls -la "$(dirname "$PROJECT")"
